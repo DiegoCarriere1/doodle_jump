@@ -12,6 +12,7 @@ export class Model {
         this._gravitySpeed = 0;
         this._position = { x: 150, y: 225 };
         this.previousY = this._position.y;
+        this.temps_immobile = 0;
 
         this.doodleHeight = 124 / 2;
         this.doodleWidth = 120 / 2;
@@ -31,6 +32,8 @@ export class Model {
 
     get direction() { return this._direction; }
     set direction(value) { return this._direction = value; }
+
+    getScore() {return this.score; }
 
     BindDisplay(callback) { this.b_Display = callback; }
     BindCanvaSize(callback) { this.b_canvaSize = callback; }
@@ -74,8 +77,15 @@ export class Model {
 
         if (this._position.y < this.previousY) {
             this.score += 1;
+            this.temps_immobile = 0;
         }
+        else {
+            this.temps_immobile++;
+            if(this.temps_immobile > 300) {
+                this.b_reset();
+            }
 
+        }
         if(is_AI) {
             //les entrées sont : distance pour les 4 tiles les plus proches, position en x et y de Doodle.
             let entrees = [closestTiles[0].distance, closestTiles[1].distance, closestTiles[2].distance,

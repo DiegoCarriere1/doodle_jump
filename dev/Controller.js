@@ -7,23 +7,25 @@ export class Controller {
     static NB_ENTREES_IA = 6; //(vecteur rouge / vert / jeune / bleu / position x Doodle / y)
     static STRUCTURE_RESEAU = [12,6,3]; //3 couches de neurones avec respectivement 12, 6 et 3 neurones
 
-    static POPULATION_MAX = 200; //(nombre d’individus au sein de la population)
-    static MAX_ITER = 500; //(nombre d’itérations maximum s’il n’y a pas de Game Over)
-    static MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
-    static NB_ENFANTS = 0.50; //(50% des individus de la population vont être remplacés par de nouveaux enfants)
-    static TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
-    constructor(PNGs, IS_AI, id_canva, canva_size) {
+    constructor(PNGs, IS_AI, id, canva_size, max_iter) {
         this.is_AI = IS_AI;
         this.PNGs = PNGs;
-        this.id_canva = id_canva;
-        console.log(this.id_canva);
+        this.id = id;
+        this.bestScore = 0;
+
+        if(this.is_AI) {
+            this.iter_restantes = max_iter;
+            this.is_Active = true;
+            this.reset_reseau();
+        }
+
+
         this._initialize(canva_size);
     }
 
     _initialize(canva_size) {
-        let reseau = new Reseau(Controller.NB_ENTREES_IA, Controller.STRUCTURE_RESEAU);
-        this._view = new View(this.PNGs, this.id_canva, canva_size);
-        this._model = new Model(reseau);
+        this._view = new View(this.PNGs, this.id, canva_size);
+        this._model = new Model(this.reseau);
 
         this._startTime = Date.now();
         this._lag = 0;
@@ -43,6 +45,7 @@ export class Controller {
         this._model.createTiles();
     }
 
+
     Display(position) { this._view.Display(position, this._model.score); }
 
     draw(tiles, position) { this._view.drawGame(tiles, position); }
@@ -53,6 +56,7 @@ export class Controller {
     GetDoodleHeight() { return this._model.doodle_height; }
     GetDoodleWidth() { return this._model.doodle_whidth; }
     GetCanvaSize() { return this._view.CanvaSize; }
+    getScore() {return this._model.getScore(); }
 
     Update() {
         let currentTime = Date.now();
@@ -73,7 +77,50 @@ export class Controller {
         requestAnimationFrame(this.Update.bind(this));
     }
 
+
+    editBestScore() {
+        let score_elem = document.getElementById(this.id + "_score");
+        score_elem.innerText = this.bestScore;
+    }
+
+    editNbTentative() {
+        let nb_tentative = document.getElementById(this.id + "_tentative");
+        nb_tentative.innerText = this.iter_restantes;
+    }
+
+    getBestScore() { return this.bestScore; }
+
+
+    reset_reseau() {
+        this.reseau = new Reseau(Controller.NB_ENTREES_IA, Controller.STRUCTURE_RESEAU);
+    }
+
+    getReseau() {
+        return this.reseau;
+    }
+
+
     reset() {
-        this._initialize();
+        const score = this.getScore();
+
+        if(score > this.bestScore) { //alteration du meilleur score.
+            this.bestScore = score;
+            this.editBestScore();
+        }
+
+        if(this.is_AI) { //code à executer si le joueur est une IA
+            this.iter_restantes--;
+            this.editNbTentative();
+
+            if(this.iter_restantes !== 0) { //si il n'y a plus d'essai alors on desactive le joueur.
+                this._initialize();
+            } else {
+                this.is_Active = false;
+            }
+        }
+        else {
+            this._initialize();
+        }
+
     }
 }

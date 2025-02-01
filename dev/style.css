@@ -9,3 +9,9 @@ canvas {
     border-radius: 15px;
     margin: 10px;
 }
+
+
+div div {
+    display: flex;
+    flex-direction: row;
+}
