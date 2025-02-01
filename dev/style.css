@@ -1,0 +1,11 @@
+body {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 95%;
+}
+
+canvas {
+    border-radius: 15px;
+    margin: 10px;
+}

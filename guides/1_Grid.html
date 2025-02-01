@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Un pied à l'étrier</title>
+    <style>
+        body {
+            background-color: antiquewhite;
+        }
+    </style>
+</head>
+<body>
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+        <div style="display: flex; gap: 10px; flex-direction: column;">
+            <select id="my_shape">
+                <option value="0"> Carré </option>
+                <option value="1"> Cercle </option>
+            </select>
+            <select id="my_color">
+                <option value="black"> Noir </option>
+                <option value="blue"> Bleu </option>
+                <option value="red"> Rouge </option>
+                <option value="green"> Vert </option>
+            </select>
+            <button id="my_button"> Valider </button>
+        </div>
+    
+        <canvas id="my_canvas"></canvas>
+    </div>
+
+    <script>
+        
+        /*  -----------------------------------------------------------
+                                     OBJECTIF                          
+            
+            Dessiner des carrés ou des ronds colorés en fonction des 
+            informations renseignées par l'utilisateur.
+            ----------------------------------------------------------- */
+
+
+        /* -- DECLARATION ET INITIALISATION DE PLUSIEURS VARIABLES (AVEC UNE PORTEE GLOBALE) -- */
+
+
+        // Privilégier le mot-clé "let" pour déclarer une variable au lieu du mot-clé "var". Le mot-clé "let" protège de la re-déclaration d'une même variable et à une portée de bloc contrairement à la portée de fonction du mot-clé "var".
+        
+
+
+
+        const HEXTILES_IMAGE = new Image();
+        HEXTILES_IMAGE.src = '../tiles/game-tiles.png';
+        Promise.all([
+            new Promise( (resolve) => {HEXTILES_IMAGE.addEventListener('load', () => { resolve();}); })
+        ])
+            .then(() => {
+                let controleur = new Controler([
+                    [0, 0, 0],
+                    [0, 1, 0],
+                    [0, 2, 0],
+                    [0, 0, 0],
+                ])
+            });
+
+        class View {
+            constructor() {
+                let canvas = document.getElementById('my_canvas'); // Récupération d'une balise HTML par son ID.
+                canvas.width  = _nbColumns * _cellSize;
+                canvas.height = _nbLines * _cellSize;
+                let ctx = canvas.getContext('2d');
+                Display(ctx);
+            }
+
+            bindDisplay(callback) {
+                this.display = callback;
+            }
+            Display(ctx) { // Le paramètre DrawingFunction est une fonction.
+                for (let i_line = 0; i_line < _nbLines; i_line++) { // Boucles for pour afficher la grille.
+                    for (let i_col = 0; i_col < _nbColumns; i_col++) {
+
+                        switch (_grid[i_line][i_col]) {
+                            case 0: {
+                                ctx.drawImage(HEXTILES_IMAGE, 1, 1, 57, 15, i_line * _cellSize, i_col * _cellSize, 57 -1, 15, 1);
+                                break;
+                            }
+                            case 1: {
+                                ctx.drawImage(HEXTILES_IMAGE, 1, 19, 57, 15, i_line * _cellSize, i_col * _cellSize, 57 -1, 15, 1);
+                                break;
+                            }
+                            case 2: {
+                                ctx.drawImage(HEXTILES_IMAGE, 1, 55, 57, 15, i_line * _cellSize, i_col * _cellSize, 57 -1, 15, 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        class Model {
+
+
+            _nbLines   = _grid.length; // Nombre d'éléments dans le tableau (nombre de lignes).
+            _nbColumns = _grid[0].length; // Nombre de colonnes.
+            _cellSize  = 100; // La taille d'une cellule en pixel.
+        }
+
+        class Controler {
+            constructor(grid) {
+                this.model = new Model();
+                this.view = new View();
+            }
+        }
+
+
+
+        /*
+            Exercice 1:
+            -----------
+            A l'aide de la fonction ctx.drawImage (https://developer.mozilla.org/fr/docs/Web/API/CanvasRenderingContext2D/drawImage) afficher une grille d'images.
+            Les valeurs au sein de la grille déterminent l'image à afficher.
+            Utiliser pour cela:
+
+            * la grille suivante:
+
+            let _grid = [
+                [0, 0, 0],
+                [0, 1, 0],
+                [0, 2, 0],
+                [0, 0, 0],
+            ];
+
+            * les plateformes au sein de l'image ../tiles/game-tiles.png sont situées aux coordonnées suivantes:
+                - 0, plateforme normale: 1, 1, 57, 15
+                - 1, plateforme mouvante: 1, 19, 57, 15
+                - 2, plateforme disparaisante: 1, 55, 57, 15
+            * le code suivant pour charger le png et écrire votre programme.
+
+            ```
+            const HEXTILES_IMAGE = new Image();
+            HEXTILES_IMAGE.src = 'path/of/png';
+            Promise.all([
+                new Promise( (resolve) => {HEXTILES_IMAGE.addEventListener('load', () => { resolve();}); })
+            ])
+            .then(() => {
+                // Votre code ici.
+            });
+            ```
+
+            ########################################################
+
+            Exercice 2:
+            -----------
+            Effectuer ce même exercice à travers l'architecture MVC (https://github.com/PAJEAN/cours_javascript/tree/master/TP/MVC) en utilisant des fonctions callback entre les classes.
+        */
+    </script>
+    
+</body>
+</html>
