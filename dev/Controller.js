@@ -144,8 +144,8 @@ export class Controller {
     }
 
     //fonction quand l'IA a terminé toutes ses tentatives. récupère son score et les poids de son réseau.
-    recup_infos_reseau() {
-        return [this.reseau.getPoids(), this.reseau.getBiais()];
+    get_reseau() {
+        return this.reseau;
     }
 
 }

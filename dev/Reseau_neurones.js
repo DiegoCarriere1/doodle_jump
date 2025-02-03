@@ -36,7 +36,7 @@ class Neurone {
 }
 
 export class Reseau {
-    constructor(entrees, neurones) {
+    constructor(entrees, neurones) { //constructeur aleatoire
         this.nb_couches = neurones.length;
         this.couches = this.init_neurones(neurones);
         this.matrices_poids = this.init_matrices_poids(entrees);
@@ -47,9 +47,8 @@ export class Reseau {
         //console.log("couches : " + this.couches);
         //console.log("matrices poids : " + this.matrices_poids);
         //console.log("matrices biais : " + this.matrices_biais);
-
-
     }
+
 
     /** *****************************************************************************************************************/
     /** init matrices

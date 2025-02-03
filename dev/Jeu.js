@@ -2,8 +2,8 @@ import { Controller } from './Controller.js';
 
 
 
-class Joueur {
-    static MAX_ITER = 2; //(nombre d’itérations maximum s’il n’y a pas de Game Over)
+export class Joueur {
+    static MAX_ITER = 20;//(nombre d’itérations maximum s’il n’y a pas de Game Over)
 
     constructor(PNGs, is_AI, id, canva_size) {
         this.is_AI = is_AI;
@@ -44,38 +44,40 @@ class Joueur {
         this.jeu = jeu;
     }
 
+    get_reseau() {
+        return this.app.get_reseau();
+    }
+
 }
 
 export class Jeu {
     static AI_GAME = true;
     static POPULATION_MAX = 50; //(nombre d’individus au sein de la population)
-    static MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
     static NB_ENFANTS = 0.70; //(50% des individus de la population vont être remplacés par de nouveaux enfants)
-    static TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
-    constructor(canva_size) {
-        const background = new Image();
-        const lik_left = new Image();
-        const lik_right = new Image();
-        const tiles = new Image();
+    constructor(PNGs, canva_size, joueurs= null) {
 
         this.canva_size = canva_size;
         this.nb_survivants = Jeu.POPULATION_MAX;
 
-        background.src = '../tiles/bck@2x.png';
-        lik_left.src = '../tiles/lik-left@2x.png';
-        lik_right.src = '../tiles/lik-right@2x.png';
-        tiles.src = '../tiles/game-tiles.png';
-
-        this.PNGs = [background, lik_left, lik_right, tiles];
         this.nb_joueurs = Jeu.POPULATION_MAX;
-        this.joueurs = new Array(this.nb_joueurs);
+
+        if(joueurs) {
+            this.joueurs = joueurs;
+
+        }
+        else { //creation de joueurs avec des reseaux aleatoires (premiere iteration)
+            this.joueurs = new Array(this.nb_joueurs);
+
+            for (let i = 0; i < this.nb_joueurs; i++) {
+                this.joueurs[i] = new Joueur(PNGs, Jeu.AI_GAME, i, this.canva_size);
+            }
+        }
 
         for (let i = 0; i < this.nb_joueurs; i++) {
             this.creer_html_joueur(i);
-
-            this.joueurs[i] = new Joueur(this.PNGs, Jeu.AI_GAME, i, this.canva_size);
             this.joueurs[i].set_jeu_instance(this);
         }
+
     }
 
     creer_html_joueur(position) {
@@ -109,23 +111,24 @@ export class Jeu {
     reduce_nb_survivant() {
         this.nb_survivants--;
         if(this.nb_survivants === 0) {
-            this.arret();
+            this.arreter();
         }
     }
 
 
+    //retourne les meilleurs joueurs du jeu selon Jeu.NB_ENFANTS
     arreter() {
         //récupérer les meilleurs joueurs (futurs parents)
         this.joueurs.sort((joueur_a,joueur_b) => { return joueur_b.get_best_score() - joueur_a.get_best_score(); });
         const nb_parents = Math.round(Jeu.POPULATION_MAX * ( 1 - Jeu.NB_ENFANTS));
 
-        let parents_poids = new Array(nb_parents);
+        let parents = new Array(nb_parents);
 
         for (let i = 0; i < nb_parents; i++) {
-            parents_poids.push(this.joueurs[i].recup_infos_reseau());
+            parents.push(this.joueurs[i]);
         }
 
-        return parents_poids;
+        return parents;
     }
 }
 
