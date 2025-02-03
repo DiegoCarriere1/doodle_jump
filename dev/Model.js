@@ -39,55 +39,57 @@ export class Model {
     BindCanvaSize(callback) { this.b_canvaSize = callback; }
     BindReset(callback) { this.b_reset = callback; }
     BindDraw(callback) { this.b_drawGame = callback; }
+    BindResetReseau(callback) {this.b_reset_reseau = callback; }
 
     Move(fps, is_AI, closestTiles) {
         this._gravitySpeed += Model.GRAVITY;
         this._position.y += this._gravitySpeed / fps;
         this._position.x += this._direction * Model.SPEED / fps;
+        let canvaSize = this.b_canvaSize();
 
         let doodleCenter = this.getDoodleCenter();
         let marge = this.doodleWidth / 4;
 
-        if (this._position.y > this.b_canvaSize()[1]) {
+        if (this._position.y > canvaSize[1]) {
             this.b_reset();
         }
 
-        if (this._gravitySpeed > 0) {//en descente.
-            this.AllTiles.forEach((tile) => {
+        let moveAmount = 0;
+        let toMoveTiles = this.toMoveTiles;
 
-                if (tile.isActive(this.b_canvaSize()[1]) && tile.touche(doodleCenter[0], doodleCenter[1], marge)) {
 
-                    this._Jump(tile);
-                    this.toMoveTiles = this.b_canvaSize()[1] - tile.getY() - 30;
+        this.AllTiles.forEach((tile) => {
+            if (this._gravitySpeed > 0 && tile.isActive(canvaSize[1]) && tile.touche(doodleCenter[0], doodleCenter[1], marge)) {
+                this._Jump(tile, canvaSize);
+                toMoveTiles = canvaSize[1] - tile.getY() - 30;
 
-                    if (tile.type === 2) {
-                        tile.falling = true;
-                    }
+                if (tile.type === 2) {
+                    tile.falling = true;
                 }
-            });
-        }
+            }
 
-        if (this.toMoveTiles > 0) {
-            const moveAmount = Math.min(2, this.toMoveTiles) * (this.b_canvaSize()[1] / doodleCenter[1]); // Limite pour un mouvement fluide
-            this.AllTiles.forEach((tile) => {
+            if (toMoveTiles > 0) {
+                moveAmount = Math.min(2, toMoveTiles) * (canvaSize[1] / doodleCenter[1]); // Limite pour un mouvement fluide
                 tile.setY(tile.getY() + moveAmount);
-            });
-            this.toMoveTiles -= moveAmount;
-        }
+            }
+
+            this.MoveTile(tile, canvaSize);
+        });
+
+        this.toMoveTiles = toMoveTiles - moveAmount;
 
         if (this._position.y < this.previousY) {
             this.score += 1;
             this.temps_immobile = 0;
-        }
-        else {
+        } else {
             this.temps_immobile++;
-            if(this.temps_immobile > 300) {
+            if (this.temps_immobile > 500) {
                 this.b_reset();
             }
-
         }
-        if(is_AI) {
-            //les entrées sont : distance pour les 4 tiles les plus proches, position en x et y de Doodle.
+
+        if (is_AI) {
+            // les entrées sont : distance pour les 4 tiles les plus proches, position en x et y de Doodle
             let entrees = [closestTiles[0].distance, closestTiles[1].distance, closestTiles[2].distance,
                 closestTiles[3].distance, doodleCenter[0], doodleCenter[1]];
 
@@ -109,12 +111,12 @@ export class Model {
         this.b_Display(this._position);
     }
 
-    MoveTile(tile) {
+    MoveTile(tile, canvaSize) {
         if (tile.type === 1) {
             tile.speed = 1;
             tile.x += tile.speed * tile.direction;
 
-            if (tile.x <= 0 || tile.x + Tile._widthCell >= this.b_canvaSize()[0]) {
+            if (tile.x <= 0 || tile.x + Tile._widthCell >= canvaSize[0]) {
                 tile.direction *= -1;
             }
         } else if (tile.type === 2 && tile.falling) {
@@ -123,8 +125,8 @@ export class Model {
         }
     }
 
-    _Jump(tile) {
-        this._gravitySpeed = -(Model.JUMP_FORCE) * (tile.getY() / this.b_canvaSize()[1]);
+    _Jump(tile, canvaSize) {
+        this._gravitySpeed = -(Model.JUMP_FORCE) * (tile.getY() / canvaSize[1]);
     }
 
     getDoodleCenter() {
@@ -133,8 +135,9 @@ export class Model {
 
     createTiles() {
         this.AllTiles = [];
-        let tile_max_range_start = this.b_canvaSize()[1] / 4;
-        let tile_max_range_end = this.b_canvaSize()[1] / 3;
+        let canvaSize = this.b_canvaSize();
+        let tile_max_range_start = canvaSize[1] / 4;
+        let tile_max_range_end = canvaSize[1] / 3;
 
         let lastY = 475;
 
@@ -147,7 +150,7 @@ export class Model {
             let tile_max_range = tile_max_range_start + (tile_max_range_end - tile_max_range_start) * progress;
 
             let randX = Math.max(
-                parseInt(Math.random() * (this.b_canvaSize()[0] - Tile.getWidthCell())),
+                parseInt(Math.random() * (canvaSize[0] - Tile.getWidthCell())),
                 Tile.getWidthCell()
             );
 
@@ -166,10 +169,24 @@ export class Model {
     }
 
     getClosestTiles(nb_retrieve) {
+        let closestTiles = [];
+        let maxDistance = Number.MAX_VALUE;
+
         this.AllTiles.forEach(tile => {
             tile.distance = this.getDistance(this._position.x, this._position.y, tile.x, tile.y);
+            if (closestTiles.length < nb_retrieve) {
+                closestTiles.push(tile);
+                if (tile.distance < maxDistance) {
+                    maxDistance = tile.distance;
+                }
+            } else if (tile.distance < maxDistance) {
+                closestTiles.sort((a, b) => a.distance - b.distance);
+                closestTiles.pop();
+                closestTiles.push(tile);
+                maxDistance = closestTiles[closestTiles.length - 1].distance;
+            }
         });
 
-        return this.AllTiles.sort((a, b) => a.distance - b.distance).slice(0, nb_retrieve);
+        return closestTiles.sort((a, b) => a.distance - b.distance);
     }
 }

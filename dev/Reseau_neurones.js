@@ -121,6 +121,14 @@ export class Reseau {
         return matrices;
     }
 
+    getPoids() {
+        return this.matrices_poids;
+    }
+
+    getBiais() {
+        return this.matrices_biais;
+    }
+
     /** *****************************************************************************************************************/
     /** transformation linéaire
      /** *****************************************************************************************************************/
@@ -142,7 +150,7 @@ export class Reseau {
 
 
     get_entrees_couche(num_couche, entree_precedente) {
-        let entrees = [];
+        let entrees = new Array(this.couches[num_couche].length);
 
         for (let i = 0; i < this.couches[num_couche].length; i++) {
             entrees[i] = this.couches[num_couche][i]

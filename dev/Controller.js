@@ -1,6 +1,6 @@
 import { View } from './View.js';
 import { Model } from './Model.js';
-import {Reseau} from "./reseau_neurones.js";
+import {Reseau} from "./Reseau_neurones.js";
 
 export class Controller {
 
@@ -12,10 +12,11 @@ export class Controller {
         this.PNGs = PNGs;
         this.id = id;
         this.bestScore = 0;
+        this.canva_size = canva_size;
 
         if(this.is_AI) {
             this.iter_restantes = max_iter;
-            this.is_Active = true;
+            this.set_isActive(true);
             this.reset_reseau();
         }
 
@@ -41,6 +42,8 @@ export class Controller {
         this._view.BindGetDoodleHeight(this.GetDoodleHeight.bind(this));
         this._view.BindGetDoodleWidth(this.GetDoodleWidth.bind(this));
         this._view.BindGetTiles(this.GetTiles.bind(this));
+
+        this._model.BindResetReseau(this.reset_reseau.bind(this));
 
         this._model.createTiles();
     }
@@ -73,8 +76,12 @@ export class Controller {
 
         this._model.b_drawGame(closestTiles, this._model._position);
 
-        this._model.All_Tiles.forEach(tile => this._model.MoveTile(tile));
-        requestAnimationFrame(this.Update.bind(this));
+        if(this.is_active) {
+            requestAnimationFrame(this.Update.bind(this));
+        }
+        else {
+
+        }
     }
 
 
@@ -88,6 +95,11 @@ export class Controller {
         nb_tentative.innerText = this.iter_restantes;
     }
 
+    editFin() {
+        let canva = document.getElementById(this.id + "_canvas");
+        canva.style = "border: 10px solid red";
+    }
+
     getBestScore() { return this.bestScore; }
 
 
@@ -95,8 +107,15 @@ export class Controller {
         this.reseau = new Reseau(Controller.NB_ENTREES_IA, Controller.STRUCTURE_RESEAU);
     }
 
-    getReseau() {
-        return this.reseau;
+    set_isActive(value) {
+        this.is_active = value;
+        if(this.joueurInstance) { //si l'instance d'un joueur a bien été associé au controleur
+            this.joueurInstance.onControllerActiveChanged(value);
+        }
+    }
+
+    setJoueurInstance(joueurInstance) { //permet de référencer le joueur associé au controleur.
+        this.joueurInstance = joueurInstance;
     }
 
 
@@ -115,12 +134,18 @@ export class Controller {
             if(this.iter_restantes !== 0) { //si il n'y a plus d'essai alors on desactive le joueur.
                 this._initialize();
             } else {
-                this.is_Active = false;
+                this.set_isActive(false);
+                this.editFin();
             }
         }
         else {
             this._initialize();
         }
-
     }
+
+    //fonction quand l'IA a terminé toutes ses tentatives. récupère son score et les poids de son réseau.
+    recup_infos_reseau() {
+        return [this.reseau.getPoids(), this.reseau.getBiais()];
+    }
+
 }
