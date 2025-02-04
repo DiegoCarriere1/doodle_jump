@@ -10,90 +10,57 @@ lik_left.src = '../tiles/lik-left@2x.png';
 lik_right.src = '../tiles/lik-right@2x.png';
 tiles.src = '../tiles/game-tiles.png';
 const PNGs = [background, lik_left, lik_right, tiles];
+
 class Genetique {
 
     static MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
     static TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
-
-let jeu = null;
     static CANVA_SIZE = [360, 540];
 
-Jeu.AI_GAME = document.getElementById("isAi").checked;
 
-const aiCheckbox = document.getElementById("isAi");
+    constructor() {
+        Jeu.AI_GAME = document.getElementById("isAi").checked;
 
-aiCheckbox.addEventListener("change", () => {
-    Jeu.AI_GAME = aiCheckbox.checked;
-    resetGame();
-});
-
-function resetGame() {
-    jeu.joueurs = null;
-    jeu = null;
-    clearGameElements();
-
-    setTimeout(() => {
-        algorithme_genetique();
-    }, 100);
-}
-
-function clearGameElements() {
-    const joueurContainers = document.querySelectorAll('.joueur-container');
-    joueurContainers.forEach(container => container.remove());
-}
-
-constructor() {
-    this.joueurs = null;
-    this.gen_restantes = Genetique.MAX_GENERATION;
-    this.jeu_actuel = new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs);
-
-}
-
-lancer() {
-    this.jeu_actuel.lancer();
-    this.jeu_actuel.changer_generation(this.algorithme_genetique.bind(this));
-}
-
-
-algorithme_genetique() {
-    this.gen_restantes--;
-    if (this.gen_restantes !== 0) {
-
-        let meilleurs_joueurs = this.jeu_actuel.arreter();
-        this.joueurs = this.generer_enfants(meilleurs_joueurs);
-
-        this.clearGameElements();
-        setTimeout(() => { }, 100);
-
-        this.jeu_actuel = new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs);
-        this.jeu_actuel.lancer();
-
-        this.jeu_actuel.changer_generation(this.algorithme_genetique.bind(this));
-
+        this.joueurs = null;
+        this.gen_restantes = Genetique.MAX_GENERATION;
+        this.jeu_actuel = Jeu.AI_GAME ?
+            new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs) :
+            new Jeu(PNGs, Genetique.CANVA_SIZE, null);
     }
-}
 
+    clearGameElements() {
+        const joueurContainers = document.querySelectorAll('.joueur-container');
+        joueurContainers.forEach(container => container.remove());
+    }
 
-generer_enfants(parents) {
-    const max_joueurs = Jeu.POPULATION_MAX;
-    const nb_parents = parents.length;
-    function algorithme_genetique() {
-        console.log(Jeu.AI_GAME)
+    lancer() {
         if (Jeu.AI_GAME) {
-            let joueurs = null;
-
-            jeu = new Jeu(PNGs, [360, 540], joueurs);
-            jeu.lancer();
-            // let meilleurs_joueurs = jeu.arreter();
-            // joueurs = generer_enfants(meilleurs_joueurs);
+            this.jeu_actuel.lancer();
+            this.jeu_actuel.changer_generation(this.algorithme_genetique.bind(this));
         } else {
-            jeu = new Jeu(PNGs, [360, 540], null);
-            jeu.lancer();
+            this.jeu_actuel.lancer();
         }
     }
 
+    algorithme_genetique() {
+        this.gen_restantes--;
+        if (this.gen_restantes !== 0) {
 
-    function generer_enfants(parents) {
+            let meilleurs_joueurs = this.jeu_actuel.arreter();
+            this.joueurs = this.generer_enfants(meilleurs_joueurs);
+
+            this.clearGameElements();
+            setTimeout(() => { }, 100);
+
+            this.jeu_actuel = new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs);
+            this.jeu_actuel.lancer();
+
+            this.jeu_actuel.changer_generation(this.algorithme_genetique.bind(this));
+
+        }
+    }
+
+    generer_enfants(parents) {
         const max_joueurs = Jeu.POPULATION_MAX;
         const nb_parents = parents.length;
 
@@ -154,17 +121,19 @@ generer_enfants(parents) {
 
         return [ratio_parents1, ratio_parents2];
     }
-
-    clearGameElements() {
-        const joueurContainers = document.querySelectorAll('.joueur-container');
-        joueurContainers.forEach(container => container.remove());
-    }
-
 }
-
 
 const gen = new Genetique();
 gen.lancer();
+
+const aiCheckbox = document.getElementById("isAi");
+
+aiCheckbox.addEventListener("change", () => {
+    Jeu.AI_GAME = aiCheckbox.checked;
+    gen.clearGameElements();
+});
+
+
 
 
 //présentation < 5 min :

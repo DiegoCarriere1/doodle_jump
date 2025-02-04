@@ -3,7 +3,7 @@ import { Controller } from './Controller.js';
 
 
 export class Joueur {
-    static MAX_ITER = 2;//(nombre d’itérations maximum s’il n’y a pas de Game Over)
+    static MAX_ITER = 10; //(nombre d’itérations maximum s’il n’y a pas de Game Over)
 
     constructor(PNGs, is_AI, id, canva_size, reseau) {
         this.is_AI = is_AI;
@@ -37,7 +37,7 @@ export class Joueur {
             });
         }))
             .then(() => {
-                this.app = new Controller(this.PNGs, this.is_AI, this.id, this.canva_size, Joueur.MAX_ITER);
+                this.app = new Controller(this.PNGs, this.is_AI, this.id, Joueur.MAX_ITER);
                 this.app.setJoueurInstance(this);
                 this.app.Update();
             })
@@ -53,6 +53,7 @@ export class Joueur {
     set_best_score(score) {
         this.best_score = score;
     }
+
     onControllerActiveChanged(is_active) {
         if (!is_active && this.app) {
             this.best_score = this.app.getBestScore();
@@ -64,8 +65,6 @@ export class Joueur {
     set_jeu_instance(jeu) {
         this.jeu = jeu;
     }
-
-
 
     get_reseau() {
         return this.app.get_reseau();
@@ -108,6 +107,7 @@ export class Jeu {
     }
 
     creer_html_joueur(position) {
+        console.log(position, this.canva_size);
         let div_joueur = document.createElement("div");
         div_joueur.setAttribute("id", position.toString());
         div_joueur.classList.add("joueur-container");
@@ -138,39 +138,40 @@ export class Jeu {
 
     changer_generation(callback) {
         this.b_changer_gen = callback;
-        lancer() {
-            if (Jeu.AI_GAME) {
-                this.joueurs.forEach((joueur) => joueur.jouer());
-            } else {
-                this.joueur.jouer();
-            }
-        }
+    }
 
-
-        reduce_nb_survivant() {
-            this.nb_survivants--;
-            if (this.nb_survivants === 0) {
-                this.b_changer_gen();
-            }
-            return null;
-        }
-
-        //retourne les meilleurs joueurs du jeu selon Jeu.NB_ENFANTS
-        arreter() {
-            //récupérer les meilleurs joueurs (futurs parents)
-            this.joueurs.sort((joueur_a, joueur_b) => { return joueur_b.get_best_score() - joueur_a.get_best_score(); });
-            const nb_parents = Math.round(Jeu.POPULATION_MAX * (1.0 - Jeu.NB_ENFANTS));
-            //console.log("nb_parents : " + nb_parents);
-
-            let parents = new Array(nb_parents);
-            //console.log(this.joueurs);
-
-            for (let i = 0; i < nb_parents; i++) {
-                parents[i] = (this.joueurs[i]);
-            }
-
-            //console.log(parents);
-            return parents;
+    lancer() {
+        if (Jeu.AI_GAME) {
+            this.joueurs.forEach((joueur) => joueur.jouer());
+        } else {
+            this.joueur.jouer();
         }
     }
+
+    reduce_nb_survivant() {
+        this.nb_survivants--;
+        if (this.nb_survivants === 0) {
+            this.b_changer_gen();
+        }
+        return null;
+    }
+
+    //retourne les meilleurs joueurs du jeu selon Jeu.NB_ENFANTS
+    arreter() {
+        //récupérer les meilleurs joueurs (futurs parents)
+        this.joueurs.sort((joueur_a, joueur_b) => { return joueur_b.get_best_score() - joueur_a.get_best_score(); });
+        const nb_parents = Math.round(Jeu.POPULATION_MAX * (1.0 - Jeu.NB_ENFANTS));
+        //console.log("nb_parents : " + nb_parents);
+
+        let parents = new Array(nb_parents);
+        //console.log(this.joueurs);
+
+        for (let i = 0; i < nb_parents; i++) {
+            parents[i] = (this.joueurs[i]);
+        }
+
+        //console.log(parents);
+        return parents;
+    }
+}
 
