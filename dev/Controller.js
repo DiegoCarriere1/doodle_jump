@@ -1,24 +1,23 @@
 import { View } from './View.js';
 import { Model } from './Model.js';
-import {Reseau} from "./Reseau_neurones.js";
+import { Reseau } from "./Reseau_neurones.js";
 
 export class Controller {
 
     static NB_ENTREES_IA = 6; //(vecteur rouge / vert / jeune / bleu / position x Doodle / y)
-    static STRUCTURE_RESEAU = [12,6,3]; //3 couches de neurones avec respectivement 12, 6 et 3 neurones
+    static STRUCTURE_RESEAU = [12, 6, 3]; //3 couches de neurones avec respectivement 12, 6 et 3 neurones
 
     constructor(PNGs, IS_AI, id, canva_size, max_iter, reseau) {
         this.is_AI = IS_AI;
         this.PNGs = PNGs;
         this.id = id;
         this.bestScore = 0;
-        this.canva_size = canva_size;
 
-        if(this.is_AI) {
+        if (this.is_AI) {
             this.iter_restantes = max_iter;
             this.set_isActive(true);
 
-            if(reseau) { //soit on utilise le réseau passé en paramètre, soit on initialise un reseau aux poids vides.
+            if (reseau) { //soit on utilise le réseau passé en paramètre, soit on initialise un reseau aux poids vides.
                 this.reseau = reseau;
                 console.log("1");
             } else {
@@ -26,12 +25,11 @@ export class Controller {
             }
         }
 
-
-        this._initialize(canva_size);
+        this._initialize();
     }
 
-    _initialize(canva_size) {
-        this._view = new View(this.PNGs, this.id, canva_size);
+    _initialize() {
+        this._view = new View(this.PNGs, this.id);
         this._model = new Model(this.reseau);
 
         this._startTime = Date.now();
@@ -65,7 +63,7 @@ export class Controller {
     GetDoodleHeight() { return this._model.doodle_height; }
     GetDoodleWidth() { return this._model.doodle_whidth; }
     GetCanvaSize() { return this._view.CanvaSize; }
-    getScore() {return this._model.getScore(); }
+    getScore() { return this._model.getScore(); }
 
     Update() {
         let currentTime = Date.now();
@@ -82,7 +80,7 @@ export class Controller {
 
         this._model.b_drawGame(closestTiles, this._model._position);
 
-        if(this.is_active) {
+        if (!this.is_AI || this.is_active) {
             requestAnimationFrame(this.Update.bind(this));
         }
     }
@@ -90,17 +88,21 @@ export class Controller {
 
     editBestScore() {
         let score_elem = document.getElementById(this.id + "_score");
-        score_elem.innerText = this.bestScore;
+        if (score_elem) {
+            score_elem.innerText = this.bestScore;
+        }
     }
 
     editNbTentative() {
         let nb_tentative = document.getElementById(this.id + "_tentative");
-        nb_tentative.innerText = this.iter_restantes;
+        if (nb_tentative) {
+            nb_tentative.innerText = this.iter_restantes;
+        }
     }
 
     editFin() {
         let canva = document.getElementById(this.id + "_canvas");
-        canva.style = "border: 10px solid red";
+        canva.style = "border: 4px solid red";
     }
 
     getBestScore() { return this.bestScore; }
@@ -112,7 +114,7 @@ export class Controller {
 
     set_isActive(value) {
         this.is_active = value;
-        if(this.joueurInstance) { //si l'instance d'un joueur a bien été associé au controleur
+        if (this.joueurInstance) { //si l'instance d'un joueur a bien été associé au controleur
             this.joueurInstance.onControllerActiveChanged(value);
         }
     }
@@ -123,18 +125,18 @@ export class Controller {
 
 
     reset() {
-        const score = this.getScore();
+        if (this.is_AI) { //code à executer si le joueur est une IA
+            const score = this.getScore();
 
-        if(score > this.bestScore) { //alteration du meilleur score.
-            this.bestScore = score;
-            this.editBestScore();
-        }
+            if (score > this.bestScore) { //alteration du meilleur score.
+                this.bestScore = score;
+                this.editBestScore();
+            }
 
-        if(this.is_AI) { //code à executer si le joueur est une IA
             this.iter_restantes--;
             this.editNbTentative();
 
-            if(this.iter_restantes !== 0) { //si il n'y a plus d'essai alors on desactive le joueur.
+            if (this.iter_restantes !== 0) { //si il n'y a plus d'essai alors on desactive le joueur.
                 this._initialize();
             } else {
                 this.set_isActive(false);

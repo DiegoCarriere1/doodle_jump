@@ -3,10 +3,11 @@ import { Tile } from './Tile.js';
 
 export class View {
 
-    constructor(PNGs, id, canva_size) {
+    constructor(PNGs, id) {
         const id_canva = id + "_canvas";
-        //console.log(id_canva);
+
         this._canvas = document.getElementById(id_canva);
+
         this.ctx = this._canvas.getContext('2d');
         this._hold_right = false;
         this._hold_left = false;

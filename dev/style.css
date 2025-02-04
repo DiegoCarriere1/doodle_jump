@@ -2,16 +2,35 @@ body {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    width: 95%;
+    gap: 10px;
+}
+
+.joueur-container {
+    margin-top: 5px;
+    width: calc(100% / 5 - 20px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 canvas {
     border-radius: 15px;
     margin: 10px;
+    width: 100%;
 }
 
-
-div div {
+.score-container,
+.tentative-container {
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.aiSelector {
+    position: absolute;
+    top: 2%;
+    right: 2%;
 }
