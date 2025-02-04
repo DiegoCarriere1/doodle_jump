@@ -7,7 +7,7 @@ export class Controller {
     static NB_ENTREES_IA = 6; //(vecteur rouge / vert / jeune / bleu / position x Doodle / y)
     static STRUCTURE_RESEAU = [12,6,3]; //3 couches de neurones avec respectivement 12, 6 et 3 neurones
 
-    constructor(PNGs, IS_AI, id, canva_size, max_iter) {
+    constructor(PNGs, IS_AI, id, canva_size, max_iter, reseau) {
         this.is_AI = IS_AI;
         this.PNGs = PNGs;
         this.id = id;
@@ -17,7 +17,13 @@ export class Controller {
         if(this.is_AI) {
             this.iter_restantes = max_iter;
             this.set_isActive(true);
-            this.reset_reseau();
+
+            if(reseau) { //soit on utilise le réseau passé en paramètre, soit on initialise un reseau aux poids vides.
+                this.reseau = reseau;
+                console.log("1");
+            } else {
+                this.reset_reseau();
+            }
         }
 
 
@@ -79,9 +85,6 @@ export class Controller {
         if(this.is_active) {
             requestAnimationFrame(this.Update.bind(this));
         }
-        else {
-
-        }
     }
 
 
@@ -104,7 +107,7 @@ export class Controller {
 
 
     reset_reseau() {
-        this.reseau = new Reseau(Controller.NB_ENTREES_IA, Controller.STRUCTURE_RESEAU);
+        this.reseau = new Reseau(Controller.NB_ENTREES_IA, Controller.STRUCTURE_RESEAU, true);
     }
 
     set_isActive(value) {

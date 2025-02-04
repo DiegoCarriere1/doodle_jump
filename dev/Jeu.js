@@ -3,38 +3,60 @@ import { Controller } from './Controller.js';
 
 
 export class Joueur {
-    static MAX_ITER = 20;//(nombre d’itérations maximum s’il n’y a pas de Game Over)
+    static MAX_ITER = 2;//(nombre d’itérations maximum s’il n’y a pas de Game Over)
 
-    constructor(PNGs, is_AI, id, canva_size) {
+    constructor(PNGs, is_AI, id, canva_size, reseau) {
         this.is_AI = is_AI;
         this.PNGs = PNGs;
         this.id = id;
         this.canva_size = canva_size;
-        this.bestScore = 0;
+        this.best_score = 0;
         this.is_active = true;
+
+        console.log("is AI : " + is_AI + "\nreseau : " + reseau);
+        if(is_AI && reseau) { //si c'est une IA et que le réseau est donné dans le controleur
+            this.reseau = reseau;
+        }
     }
 
     jouer() {
-        Promise.all([
-            new Promise( (resolve) => {this.PNGs[0].addEventListener('load', () => { resolve();}); }),
-            new Promise( (resolve) => {this.PNGs[1].addEventListener('load', () => { resolve();}); }),
-            new Promise( (resolve) => {this.PNGs[2].addEventListener('load', () => { resolve();}); }),
-            new Promise( (resolve) => {this.PNGs[3].addEventListener('load', () => { resolve();}); })
-        ])
+        console.log("debut jouer");
+        Promise.all(this.PNGs.map((img, index) => {
+            return new Promise((resolve, reject) => {
+                if (img.complete) {
+                    resolve();
+                } else {
+                    img.addEventListener('load', () => {
+                        resolve();
+                    });
+                    img.addEventListener('error', () => {
+                        console.error(`Failed to load image ${index}`);
+                        reject(new Error(`Failed to load image ${index}`));
+                    });
+                }
+            });
+        }))
             .then(() => {
-                this.app = new Controller(this.PNGs, this.is_AI, this.id, this.canva_size, Joueur.MAX_ITER);
+                console.log('All images loaded');
+                this.app = new Controller(this.PNGs, this.is_AI, this.id, this.canva_size, Joueur.MAX_ITER, this.reseau);
                 this.app.setJoueurInstance(this);
                 this.app.Update();
+            })
+            .catch(error => {
+                console.error('Error loading images:', error);
             });
     }
 
     get_best_score() {
-        return this.bestScore;
+        return this.best_score;
     }
 
+    set_best_score(score) {
+        this.best_score = score;
+    }
     onControllerActiveChanged(is_active) {
         if(!is_active && this.app) {
-            this.bestScore = this.app.getBestScore();
+            this.best_score = this.app.getBestScore();
             this.is_active = false;
             this.jeu.reduce_nb_survivant();
         }
@@ -44,6 +66,8 @@ export class Joueur {
         this.jeu = jeu;
     }
 
+
+
     get_reseau() {
         return this.app.get_reseau();
     }
@@ -52,9 +76,9 @@ export class Joueur {
 
 export class Jeu {
     static AI_GAME = true;
-    static POPULATION_MAX = 50; //(nombre d’individus au sein de la population)
-    static NB_ENFANTS = 0.70; //(50% des individus de la population vont être remplacés par de nouveaux enfants)
-    constructor(PNGs, canva_size, joueurs= null) {
+    static POPULATION_MAX = 10; //(nombre d’individus au sein de la population)
+    static NB_ENFANTS = 0.70; //(70% des individus de la population vont être remplacés par de nouveaux enfants)
+    constructor(PNGs, canva_size, joueurs) {
 
         this.canva_size = canva_size;
         this.nb_survivants = Jeu.POPULATION_MAX;
@@ -63,7 +87,6 @@ export class Jeu {
 
         if(joueurs) {
             this.joueurs = joueurs;
-
         }
         else { //creation de joueurs avec des reseaux aleatoires (premiere iteration)
             this.joueurs = new Array(this.nb_joueurs);
@@ -83,51 +106,64 @@ export class Jeu {
     creer_html_joueur(position) {
         let div_joueur = document.createElement("div");
         div_joueur.setAttribute("id", position.toString());
+        div_joueur.classList.add("joueur-container");
 
         div_joueur.insertAdjacentHTML("beforeend",
-            "<canvas id=\""  + position + "_canvas\" width=\"" + this.canva_size[0] + "\" height=\"" + this.canva_size[1] + "\" style=\"border: 1px solid red\"></canvas>");
+            "<canvas id=\"" + position + "_canvas\" width=\"" + this.canva_size[0] + "\" height=\"" + this.canva_size[1] + "\" style=\"border: 1px solid red\"></canvas>");
 
-        let div_score_joueur = document.createElement("div");
-        div_score_joueur.insertAdjacentHTML("beforeend",
-            "<p id=\"" + position + "_text_score\"> Meilleur score : </p>");
-        div_score_joueur.insertAdjacentHTML("beforeend",
-            "<p id=\"" + position + "_score\">0</p>");
-        div_joueur.insertAdjacentElement("beforeend",div_score_joueur);
+        if (Jeu.AI_GAME) {
+            let div_score_joueur = document.createElement("div");
+            div_score_joueur.classList.add("score-container");
+            div_score_joueur.insertAdjacentHTML("beforeend",
+                "<p id=\"" + position + "_text_score\"> Meilleur score : </p>");
+            div_score_joueur.insertAdjacentHTML("beforeend",
+                "<p id=\"" + position + "_score\">0</p>");
+            div_joueur.insertAdjacentElement("beforeend", div_score_joueur);
 
-        let div_nb_jeu_joueur = document.createElement("div");
-        div_nb_jeu_joueur.insertAdjacentHTML("beforeend",
-            "<p id=\"" + position + "_text_tentative\"> nb tentatives restantes : </p>");
-        div_nb_jeu_joueur.insertAdjacentHTML("beforeend",
-            "<p id=\"" + position + "_tentative\">" + Joueur.MAX_ITER + "</p>");
-        div_joueur.insertAdjacentElement("beforeend",div_nb_jeu_joueur);
+            let div_nb_jeu_joueur = document.createElement("div");
+            div_nb_jeu_joueur.classList.add("tentative-container");
+            div_nb_jeu_joueur.insertAdjacentHTML("beforeend",
+                "<p id=\"" + position + "_text_tentative\"> nb tentatives restantes : </p>");
+            div_nb_jeu_joueur.insertAdjacentHTML("beforeend",
+                "<p id=\"" + position + "_tentative\">" + Joueur.MAX_ITER + "</p>");
+            div_joueur.insertAdjacentElement("beforeend", div_nb_jeu_joueur);
+        }
 
         document.body.insertAdjacentElement("beforeend", div_joueur);
+    }
+
+    changer_generation(callback) {
+        this.b_changer_gen = callback;
+    }
+
+
+    reduce_nb_survivant() {
+        this.nb_survivants--;
+        if(this.nb_survivants === 0) {
+            this.b_changer_gen();
+        }
+        return null;
     }
 
     lancer() {
         this.joueurs.forEach((joueur) => joueur.jouer());
     }
 
-    reduce_nb_survivant() {
-        this.nb_survivants--;
-        if(this.nb_survivants === 0) {
-            this.arreter();
-        }
-    }
-
-
     //retourne les meilleurs joueurs du jeu selon Jeu.NB_ENFANTS
     arreter() {
         //récupérer les meilleurs joueurs (futurs parents)
         this.joueurs.sort((joueur_a,joueur_b) => { return joueur_b.get_best_score() - joueur_a.get_best_score(); });
-        const nb_parents = Math.round(Jeu.POPULATION_MAX * ( 1 - Jeu.NB_ENFANTS));
+        const nb_parents = Math.round(Jeu.POPULATION_MAX * ( 1.0 - Jeu.NB_ENFANTS));
+        //console.log("nb_parents : " + nb_parents);
 
         let parents = new Array(nb_parents);
+        //console.log(this.joueurs);
 
         for (let i = 0; i < nb_parents; i++) {
-            parents.push(this.joueurs[i]);
+            parents[i] = (this.joueurs[i]);
         }
 
+        //console.log(parents);
         return parents;
     }
 }

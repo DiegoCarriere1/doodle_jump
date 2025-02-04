@@ -1,4 +1,4 @@
-import { Jeu, Joueur } from './Jeu.js';
+import {Jeu, Joueur} from './Jeu.js';
 
 const background = new Image();
 const lik_left = new Image();
@@ -11,67 +11,122 @@ lik_right.src = '../tiles/lik-right@2x.png';
 tiles.src = '../tiles/game-tiles.png';
 const PNGs = [background, lik_left, lik_right, tiles];
 
+class Genetique {
 
-const MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
-const TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
+    static MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
+    static TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
+    static CANVA_SIZE = [360, 540];
 
-algorithme_genetique();
-
-function algorithme_genetique() {
-
-    let joueurs = null;
-
-    for (let i = 0; i < MAX_GENERATION; i++) {
-        const jeu = new Jeu(PNGs, [360, 540], joueurs);
-        jeu.lancer();
-        let meilleurs_joueurs = jeu.arreter();
-        joueurs = generer_enfants(meilleurs_joueurs);
+    constructor() {
+        this.joueurs = null;
+        this.gen_restantes = Genetique.MAX_GENERATION;
+        this.jeu_actuel = new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs);
 
     }
-}
+
+    lancer() {
+        this.jeu_actuel.lancer();
+        this.jeu_actuel.changer_generation(this.algorithme_genetique.bind(this));
+    }
 
 
-function generer_enfants(parents) {
-    const max_joueurs = Jeu.POPULATION_MAX;
-    const nb_parents = parents.length;
+    algorithme_genetique() {
+        this.gen_restantes--;
+        if(this.gen_restantes !== 0) {
 
-    let joueurs = parents;
+            let meilleurs_joueurs = this.jeu_actuel.arreter();
+            this.joueurs = this.generer_enfants(meilleurs_joueurs);
 
-    let parent1, parent2;
-    let rand1, rand2;
-    let enfant;
+            this.clearGameElements();
+            setTimeout(() => {}, 100);
+
+            this.jeu_actuel = new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs);
+            this.jeu_actuel.lancer();
+
+            this.jeu_actuel.changer_generation(this.algorithme_genetique.bind(this));
+
+        }
+    }
 
 
-    while (joueurs.length <= max_joueurs) {
+    generer_enfants(parents) {
+        const max_joueurs = Jeu.POPULATION_MAX;
+        const nb_parents = parents.length;
 
-        rand1 = Math.round(Math.random() * nb_parents);
-        rand2 = Math.round(Math.random() * nb_parents);
-        while (rand2 === rand1) { //eviter de faire un enfant avec lui meme
-            rand2 = Math.round(Math.random() * nb_parents);
+        console.log("max joueurs : " + max_joueurs);
+        let joueurs = [];
+
+        for (let i = 0; i < parents.length; i++) {
+            joueurs.push(new Joueur(PNGs, Jeu.AI_GAME, joueurs.length, Genetique.CANVA_SIZE, parents[i].get_reseau()));
         }
 
-        parent1 = parents[rand1];
-        parent2 = parents[rand2];
+        let parent1, parent2;
+        let reseau1, reseau2;
+        let rand1, rand2;
+        let enfant;
 
-        enfant = copuler(parent1, parent2);
+        while (joueurs.length < max_joueurs) {
 
-        joueurs.push(enfant);
+            //récupération aléatoire de 2 des parents
+            rand1 = Math.round(Math.random() * (nb_parents - 1));
+            rand2 = Math.round(Math.random() * (nb_parents - 1));
+            while (rand2 === rand1) { //eviter de faire un enfant avec lui meme
+                rand2 = Math.round(Math.random() * (nb_parents - 1));
+            }
+
+            //console.log("p.length : " + parents.length + "\nrand1 : " + rand1 + "\nrand2 : " + rand2);
+            //console.log("p1 : " + parents[rand1] + "\np2 : " + parents[rand2]);
+            //console.log(parents);
+
+            parent1 = parents[rand1];
+            parent2 = parents[rand2];
+            reseau1 = parent1.get_reseau();
+            reseau2 = parent1.get_reseau();
+            const [ratio_p1, ratio_p2] = this.get_ratio(parent1.get_best_score(), parent2.get_best_score());
+
+            const reseau_enfant = reseau1.fusionner(reseau2, ratio_p1, ratio_p2);
+            enfant = new Joueur(PNGs, Jeu.AI_GAME, joueurs.length, Genetique.CANVA_SIZE, reseau_enfant);
+            joueurs.push(enfant);
+        }
+
+        joueurs.forEach((joueur) => joueur.set_best_score(0)); //reset des meilleurs scores
+        console.log(joueurs);
+        return joueurs;
     }
 
-    return joueurs;
+
+    get_ratio(score1, score2) {
+        let ratio_parents1, ratio_parents2;
+        if(score1 === 0) score1++;
+        if(score2 === 0) score2++;
+
+        if(score1 > score2) {
+            ratio_parents1 =  1 - ((score2 / score1) / 2);
+            ratio_parents2 = (score2 / score1) / 2;
+        } else {
+            ratio_parents1 = 1 - ((score1 / score2) / 2);
+            ratio_parents2 = score1 / score2;
+        }
+
+        return [ratio_parents1, ratio_parents2];
+    }
+
+    clearGameElements() {
+        const joueurContainers = document.querySelectorAll('.joueur-container');
+        joueurContainers.forEach(container => container.remove());
+    }
+
 }
 
 
-function copuler(parent1, parent2) {
-    const reseau1 = parent1.get_reseau();
-    const reseau2 = parent2.get_reseau();
-    let enfant;
+const gen = new Genetique();
+gen.lancer();
 
 
-    return enfant;
-}
+//présentation < 5 min :
+// Max 5 diapos
+//respect cahier des charges
+//respect de MVC
+//choix d'implémentation
 
-
-
-//présentation < 5 min
-//questions 5 min
+//questions 5/10 min

@@ -36,11 +36,22 @@ class Neurone {
 }
 
 export class Reseau {
-    constructor(entrees, neurones) { //constructeur aleatoire
+    constructor(nb_entrees, neurones, is_aleatoire) { //constructeur aleatoire
+        this.nb_entrees = nb_entrees;
         this.nb_couches = neurones.length;
-        this.couches = this.init_neurones(neurones);
-        this.matrices_poids = this.init_matrices_poids(entrees);
-        this.matrices_biais = this.init_matrices_biais();
+        this.structure = neurones;
+        this.couches = this.init_neurones();
+
+
+        if(is_aleatoire) {
+            this.matrices_poids = this.init_matrices_poids(nb_entrees);
+            this.matrices_biais = this.init_matrices_biais();
+        }
+        else {
+            this.matrices_poids = [];
+            this.matrices_biais = [];
+        }
+
 
         //console.log("nb couches : " + this.nb_couches);
         //console.log("entrees : " + this.entrees);
@@ -54,11 +65,11 @@ export class Reseau {
     /** init matrices
     /** *****************************************************************************************************************/
 
-    init_neurones(neurones) {
+    init_neurones() {
         let couches = Array.from({ length: this.nb_couches }, () => []);
 
-        for (let i = 0; i < neurones.length; i++) {
-            for (let j = 0; j < neurones[i]; j++) {
+        for (let i = 0; i < this.structure.length; i++) {
+            for (let j = 0; j < this.structure[i]; j++) {
                 couches[i][j] = new Neurone(i,j);
             }
         }
@@ -83,7 +94,7 @@ export class Reseau {
 
     init_matrices_poids(entrees) {
         //console.log(entrees);
-        let matrices = []
+        let matrices = [];
 
         for (let i = 0; i < this.nb_couches; i++) {
             if(i === 0) {
@@ -120,11 +131,11 @@ export class Reseau {
         return matrices;
     }
 
-    getPoids() {
+    get_poids() {
         return this.matrices_poids;
     }
 
-    getBiais() {
+    get_biais() {
         return this.matrices_biais;
     }
 
@@ -183,6 +194,63 @@ export class Reseau {
         const expValues = inputs.map(x => Math.exp(x));
         const sumExp = expValues.reduce((a, b) => a + b, 0);
         return expValues.map(x => x / sumExp);
+    }
+
+
+    /** *****************************************************************************************************************/
+    /** Algorithme génétique
+     /** *****************************************************************************************************************/
+
+
+
+    fusionner(reseau2, ratio_p1, ratio_p2) { //prérequis, reseaux de tailles similaires
+        let enfant = new Reseau(this.nb_entrees, this.structure, false);
+        const matrices_poids_p2 = reseau2.get_poids();
+        const matrices_biais_p2 = reseau2.get_biais();
+
+
+        for (let i = 0; i < this.nb_couches; i++) {
+            //fusion des poids
+            if(i === 0) {
+                enfant.matrices_poids[i] = this.fusionner_poids(i , this.nb_entrees, matrices_poids_p2[i], ratio_p1, ratio_p2);
+            }
+            else {
+                enfant.matrices_poids[i] = this.fusionner_poids(i , this.couches[i - 1].length, matrices_poids_p2[i], ratio_p1, ratio_p2);
+            }
+
+            //fusion des biais
+            enfant.matrices_biais[i] = this.fusionner_biais(i, matrices_biais_p2[i], ratio_p1, ratio_p2);
+        }
+
+        return enfant;
+    }
+
+
+
+
+    fusionner_poids(num_couche , nb_entrees, poids_p2, ratio_p1, ratio_p2) {
+        let enfant_poids = new Array(this.couches[num_couche].length).fill(null).map(() => new Array(nb_entrees).fill(0));
+
+        for (let i = 0; i < this.couches[num_couche].length ; i++) {
+            for (let j = 0; j < nb_entrees; j++) {
+                //fusion par moyenne pondérée par les scores
+                enfant_poids[i][j] = (( this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2) ) / 2;
+            }
+
+        }
+
+        return enfant_poids;
+    }
+
+    fusionner_biais(num_couche, biais_p2, ratio_p1, ratio_p2) {
+        let enfant_biais = new Array(this.couches[num_couche].length).fill(0);
+
+        for (let i = 0; i < this.couches[num_couche].length; i++) {
+            //fusion par moyenne pondérée par les scores
+            enfant_biais[i] = ( (this.matrices_biais[num_couche][i] * ratio_p1) + (biais_p2[i] * ratio_p2) ) / 2;
+        }
+
+        return enfant_biais;
     }
 
 }
