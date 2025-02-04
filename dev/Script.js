@@ -70,3 +70,8 @@ function copuler(parent1, parent2) {
 
     return enfant;
 }
+
+
+
+//présentation < 5 min
+//questions 5 min
