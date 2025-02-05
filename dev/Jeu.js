@@ -13,14 +13,13 @@ export class Joueur {
         this.best_score = 0;
         this.is_active = true;
 
-        console.log("is AI : " + is_AI + "\nreseau : " + reseau);
-        if (is_AI && reseau) { //si c'est une IA et que le réseau est donné dans le controleur
+        //console.log("is AI : " + is_AI + "\nreseau : " + reseau);
+        if(is_AI && reseau) { //si c'est une IA et que le réseau est donné dans le controleur
             this.reseau = reseau;
         }
     }
 
     jouer() {
-        console.log("debut jouer");
         Promise.all(this.PNGs.map((img, index) => {
             return new Promise((resolve, reject) => {
                 if (img.complete) {
@@ -37,7 +36,7 @@ export class Joueur {
             });
         }))
             .then(() => {
-                this.app = new Controller(this.PNGs, this.is_AI, this.id, Joueur.MAX_ITER);
+                this.app = new Controller(this.PNGs, this.is_AI, this.id, Joueur.MAX_ITER, this.reseau);
                 this.app.setJoueurInstance(this);
                 this.app.Update();
             })
@@ -53,7 +52,6 @@ export class Joueur {
     set_best_score(score) {
         this.best_score = score;
     }
-
     onControllerActiveChanged(is_active) {
         if (!is_active && this.app) {
             this.best_score = this.app.getBestScore();
@@ -65,6 +63,8 @@ export class Joueur {
     set_jeu_instance(jeu) {
         this.jeu = jeu;
     }
+
+
 
     get_reseau() {
         return this.app.get_reseau();
@@ -79,8 +79,8 @@ export class Jeu {
     constructor(PNGs, canva_size, joueurs) {
 
         this.canva_size = canva_size;
-
         this.nb_survivants = Jeu.POPULATION_MAX;
+
         this.nb_joueurs = Jeu.POPULATION_MAX;
 
         if (Jeu.AI_GAME) {
@@ -104,10 +104,11 @@ export class Jeu {
             this.joueur = new Joueur(PNGs, Jeu.AI_GAME, 0, this.canva_size);
             this.joueur.set_jeu_instance(this);
         }
+
     }
 
     creer_html_joueur(position) {
-        console.log(position, this.canva_size);
+        //console.log(position, this.canva_size);
         let div_joueur = document.createElement("div");
         div_joueur.setAttribute("id", position.toString());
         div_joueur.classList.add("joueur-container");
@@ -150,7 +151,7 @@ export class Jeu {
 
     reduce_nb_survivant() {
         this.nb_survivants--;
-        if (this.nb_survivants === 0) {
+        if(this.nb_survivants === 0) {
             this.b_changer_gen();
         }
         return null;
