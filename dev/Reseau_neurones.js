@@ -43,7 +43,7 @@ export class Reseau {
         this.couches = this.init_neurones();
 
 
-        if(is_aleatoire) {
+        if (is_aleatoire) {
             this.matrices_poids = this.init_matrices_poids(nb_entrees);
             this.matrices_biais = this.init_matrices_biais();
         }
@@ -70,7 +70,7 @@ export class Reseau {
 
         for (let i = 0; i < this.structure.length; i++) {
             for (let j = 0; j < this.structure[i]; j++) {
-                couches[i][j] = new Neurone(i,j);
+                couches[i][j] = new Neurone(i, j);
             }
         }
 
@@ -81,7 +81,7 @@ export class Reseau {
         //console.log("nb neurones : " + nb_neurones + " nb entre : " + nb_entrees);
         let poids = new Array(nb_neurones).fill(null).map(() => new Array(nb_entrees).fill(0));
 
-        for (let i = 0; i < nb_neurones ; i++) {
+        for (let i = 0; i < nb_neurones; i++) {
             for (let j = 0; j < nb_entrees; j++) {
                 poids[i][j] = Math.random() - Math.random();
             }
@@ -97,7 +97,7 @@ export class Reseau {
         let matrices = [];
 
         for (let i = 0; i < this.nb_couches; i++) {
-            if(i === 0) {
+            if (i === 0) {
                 matrices[i] = this.init_matrice_poids(this.couches[i].length, entrees);
             }
             else {
@@ -145,7 +145,7 @@ export class Reseau {
 
     //à appeler dans la fonction move / récup le résultat avec 3 neurones de sortie et dire si
     // on bouge à droite/gauche/pas bouger
-    
+
     transformation_lineaire(entrees) {
         //console.log(entrees);
         let curr_entrees = entrees;
@@ -181,7 +181,7 @@ export class Reseau {
 
         for (let i = 0; i < entrees.length; i++) {
 
-            if(sorties[i] > max_valeur) {
+            if (sorties[i] > max_valeur) {
                 index = i;
                 max_valeur = sorties[i];
             }
@@ -211,11 +211,11 @@ export class Reseau {
 
         for (let i = 0; i < this.nb_couches; i++) {
             //fusion des poids
-            if(i === 0) {
-                enfant.matrices_poids[i] = this.fusionner_poids(i , this.nb_entrees, matrices_poids_p2[i], ratio_p1, ratio_p2);
+            if (i === 0) {
+                enfant.matrices_poids[i] = this.fusionner_poids(i, this.nb_entrees, matrices_poids_p2[i], ratio_p1, ratio_p2);
             }
             else {
-                enfant.matrices_poids[i] = this.fusionner_poids(i , this.couches[i - 1].length, matrices_poids_p2[i], ratio_p1, ratio_p2);
+                enfant.matrices_poids[i] = this.fusionner_poids(i, this.couches[i - 1].length, matrices_poids_p2[i], ratio_p1, ratio_p2);
             }
 
             //fusion des biais
@@ -228,13 +228,20 @@ export class Reseau {
 
 
 
-    fusionner_poids(num_couche , nb_entrees, poids_p2, ratio_p1, ratio_p2) {
+    fusionner_poids(num_couche, nb_entrees, poids_p2, ratio_p1, ratio_p2) {
         let enfant_poids = new Array(this.couches[num_couche].length).fill(null).map(() => new Array(nb_entrees).fill(0));
 
-        for (let i = 0; i < this.couches[num_couche].length ; i++) {
+        for (let i = 0; i < this.couches[num_couche].length; i++) {
             for (let j = 0; j < nb_entrees; j++) {
+                let rand = Math.random();
+                if (rand < 0.05) {
+                    enfant_poids[i][j] =
+                        (((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2) + (rand);
+                } else {
+                    enfant_poids[i][j] =
+                        ((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2;
+                }
                 //fusion par moyenne pondérée par les scores
-                enfant_poids[i][j] = (( this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2) ) / 2;
             }
 
         }
@@ -247,7 +254,7 @@ export class Reseau {
 
         for (let i = 0; i < this.couches[num_couche].length; i++) {
             //fusion par moyenne pondérée par les scores
-            enfant_biais[i] = ( (this.matrices_biais[num_couche][i] * ratio_p1) + (biais_p2[i] * ratio_p2) ) / 2;
+            enfant_biais[i] = ((this.matrices_biais[num_couche][i] * ratio_p1) + (biais_p2[i] * ratio_p2)) / 2;
         }
 
         return enfant_biais;
