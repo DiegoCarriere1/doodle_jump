@@ -10,28 +10,26 @@ lik_left.src = '../tiles/lik-left@2x.png';
 lik_right.src = '../tiles/lik-right@2x.png';
 tiles.src = '../tiles/game-tiles.png';
 const PNGs = [background, lik_left, lik_right, tiles];
-
 class Genetique {
 
     static MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
     static TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
     static CANVA_SIZE = [360, 540];
 
-
     constructor() {
+
         Jeu.AI_GAME = document.getElementById("isAi").checked;
 
         this.joueurs = null;
         this.gen_restantes = Genetique.MAX_GENERATION;
-        this.jeu_actuel = Jeu.AI_GAME ?
-            new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs) :
-            new Jeu(PNGs, Genetique.CANVA_SIZE, null);
+        this.jeu_actuel = new Jeu(PNGs, Genetique.CANVA_SIZE, this.joueurs);
+
+        //graphique :
+        this.score_chart = null;
+        this.bestScores = [];
+        this.averageScores = [];
     }
 
-    clearGameElements() {
-        const joueurContainers = document.querySelectorAll('.joueur-container');
-        joueurContainers.forEach(container => container.remove());
-    }
 
     lancer() {
         if (Jeu.AI_GAME) {
@@ -42,11 +40,15 @@ class Genetique {
         }
     }
 
+
     algorithme_genetique() {
         this.gen_restantes--;
         if (this.gen_restantes !== 0) {
 
             let meilleurs_joueurs = this.jeu_actuel.arreter();
+            this.collectScores(meilleurs_joueurs); //graphique
+            this.displayChart();
+
             this.joueurs = this.generer_enfants(meilleurs_joueurs);
 
             this.clearGameElements();
@@ -60,11 +62,12 @@ class Genetique {
         }
     }
 
+
     generer_enfants(parents) {
         const max_joueurs = Jeu.POPULATION_MAX;
         const nb_parents = parents.length;
 
-        console.log("max joueurs : " + max_joueurs);
+        //console.log("max joueurs : " + max_joueurs);
         let joueurs = [];
 
         for (let i = 0; i < parents.length; i++) {
@@ -101,7 +104,7 @@ class Genetique {
         }
 
         joueurs.forEach((joueur) => joueur.set_best_score(0)); //reset des meilleurs scores
-        console.log(joueurs);
+        //console.log(joueurs);
         return joueurs;
     }
 
@@ -121,7 +124,71 @@ class Genetique {
 
         return [ratio_parents1, ratio_parents2];
     }
+
+    clearGameElements() {
+        const joueurContainers = document.querySelectorAll('.joueur-container');
+        joueurContainers.forEach(container => container.remove());
+    }
+
+    collectScores(joueurs) {
+        const scores = joueurs.map(joueur => joueur.get_best_score());
+        const bestScore = Math.max(...scores);
+        const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+        this.bestScores.push(bestScore);
+        this.averageScores.push(averageScore);
+    }
+
+    displayChart() {
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+
+        // Destroy the existing chart instance if it exists
+        if (this.score_chart !== null) {
+            this.score_chart.destroy();
+        }
+
+        // Create a new chart instance
+        this.score_chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: Genetique.MAX_GENERATION - this.gen_restantes }, (_, i) => i + 1),
+                datasets: [
+                    {
+                        label: 'Best Score',
+                        data: this.bestScores,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    },
+                    {
+                        label: 'Average Score',
+                        data: this.averageScores,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Epoch'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Score'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
 }
+
 
 const gen = new Genetique();
 gen.lancer();

@@ -17,14 +17,12 @@ export class Controller {
             this.iter_restantes = max_iter;
             this.set_isActive(true);
 
-            if (reseau) { //soit on utilise le réseau passé en paramètre, soit on initialise un reseau aux poids vides.
+            if (reseau === null) { //soit on utilise le réseau passé en paramètre, soit on initialise un reseau aux poids vides.
                 this.reseau = reseau;
-                console.log("1");
             } else {
                 this.reset_reseau();
             }
         }
-
         this._initialize();
     }
 
