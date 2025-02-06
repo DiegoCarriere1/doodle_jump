@@ -233,10 +233,10 @@ export class Reseau {
 
         for (let i = 0; i < this.couches[num_couche].length; i++) {
             for (let j = 0; j < nb_entrees; j++) {
-                let rand = Math.random();
-                if (rand < 0.05) {
+                let mutation = Math.random();
+                if (mutation < 0.05) {
                     enfant_poids[i][j] =
-                        (((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2) + (rand);
+                        (((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2) + (mutation);
                 } else {
                     enfant_poids[i][j] =
                         ((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2;

@@ -162,6 +162,9 @@ export class Model {
             this.AllTiles.push(new Tile(randType, randX, randY));
             lastY = randY;
         }
+
+        // Add a full platform at the end
+        this.AllTiles.push(new Tile(0, 0, lastY - 50));
     }
 
     getDistance(x1, y1, x2, y2) {
