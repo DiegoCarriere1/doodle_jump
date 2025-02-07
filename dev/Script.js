@@ -12,7 +12,7 @@ tiles.src = '../tiles/game-tiles.png';
 const PNGs = [background, lik_left, lik_right, tiles];
 class Genetique {
 
-    static MAX_GENERATION = 50; //(nombre de générations avant de présenter les résultats finaux).
+    static MAX_GENERATION = 500; //(nombre de générations avant de présenter les résultats finaux).
     static TAUX_MUTATION = 0.05; //(probabilité qu’une constante mute)
     static CANVA_SIZE = [360, 540];
 

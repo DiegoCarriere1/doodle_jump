@@ -147,7 +147,7 @@ export class Model {
 
         while (lastY > -10000) {
             let progress = Math.abs(lastY / 10000);
-            let tile_max_range = tile_max_range_start + (tile_max_range_end - tile_max_range_start) * progress;
+            let tile_max_range = (tile_max_range_start + (tile_max_range_end - tile_max_range_start)) * progress;
 
             let randX = Math.max(
                 parseInt(Math.random() * (canvaSize[0] - Tile.getWidthCell())),

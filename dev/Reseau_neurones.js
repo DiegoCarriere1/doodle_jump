@@ -236,7 +236,7 @@ export class Reseau {
                 let mutation = Math.random();
                 if (mutation < 0.05) {
                     enfant_poids[i][j] =
-                        (((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2) + (mutation);
+                        (((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2) + (mutation*10);
                 } else {
                     enfant_poids[i][j] =
                         ((this.matrices_poids[num_couche][i][j] * ratio_p1) + (poids_p2[i][j] * ratio_p2)) / 2;

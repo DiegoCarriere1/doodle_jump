@@ -3,7 +3,7 @@ import { Controller } from './Controller.js';
 
 
 export class Joueur {
-    static MAX_ITER = 10; //(nombre d’itérations maximum s’il n’y a pas de Game Over)
+    static MAX_ITER = 3; //(nombre d’itérations maximum s’il n’y a pas de Game Over)
 
     constructor(PNGs, is_AI, id, canva_size, reseau) {
         this.is_AI = is_AI;
@@ -74,7 +74,7 @@ export class Joueur {
 
 export class Jeu {
     static AI_GAME = document.getElementById("isAi").checked;
-    static POPULATION_MAX = 50; //(nombre d’individus au sein de la population)
+    static POPULATION_MAX = 100; //(nombre d’individus au sein de la population)
     static NB_ENFANTS = 0.70; //(50% des individus de la population vont être remplacés par de nouveaux enfants)
     constructor(PNGs, canva_size, joueurs) {
 
